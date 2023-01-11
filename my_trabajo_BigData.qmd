@@ -1,0 +1,524 @@
+---
+title: "INDICADORES QUE AFECTAN AL NIVEL DE DESARROLLO DE LOS PAÍSES"
+description: | 
+  Viendo como puede afectar la evolución de la población, así como su PIB, y la esperanza de vida al desarrollo económico del 2007 principalmente. 
+author: Helena Albors (healmar@alumni.uv.es)  #--
+date: 2022-12                  #--
+categories: [trabajo BigData, análisis económico]   #--
+image: "./imagenes/imagen.png"
+title-block-banner: true #- {true, false, "green","#AA0000"}
+title-block-banner-color: "#8B8386"    #-"#FFFFFF" 
+toc: true
+toc-location: left
+toc-depth: 3
+smooth-scroll: true
+format: 
+  html:
+    backgroundcolor: "#EEE0E5"
+    embed-resources: true  
+    link-external-newwindow: true
+    #css: ./assets/my_css_file.css   #- CUIDADO!!!!
+code-tools: true
+code-link: true
+---
+
+```{r chunk-setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE, warning = FALSE, 
+                      #results = "hold",
+                      cache = FALSE, cache.path = "/caches/", comment = "#>",
+                      #fig.width = 7, #fig.height= 7,   
+                      #out.width = 7, out.height = 7,
+                      collapse = TRUE,  fig.show = "hold",
+                      fig.asp = 0.628, out.width = "75%", fig.align = "center")
+knitr::opts_chunk$set(dev = "png", dev.args = list(type = "cairo-png"))
+
+```
+
+
+```{r options-setup, include = FALSE}
+options(scipen = 999) #- para quitar la notación científica
+options("yaml.eval.expr" = TRUE) 
+
+```
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(wbstats)
+library(ggplot2)
+library(gganimate)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(wordcloud2)
+library(gt)
+library(gapminder)
+library(sf)
+library(tmap)
+library(prettydoc)
+library(plotly)
+```
+
+<br>
+
+# 1. **INTRODUCCIÓN**
+
+## **Motivación**
+Para la asignatura de "Programación y manejo de datos en la era del Big Data" debíamos realizar un trabajo individual mostrando nuestras habilidades adquiridas con RStudio a lo largo del curso. 
+
+Igual que en el caso del trabajo grupal, la elección del tema era libre. En mi caso, he escogido un análisis breve y global sobre los indicadores que influyen en el nivel de desarrollo de los países. La elección se debe a que en otra asignatura del curso, "Crecimiento y desarrollo económico en la historia", se nos exigió un ensayo sobre el desarrollo económico de un país en concreto. En mi caso tuve que hacerlo de Botsuana, pero me parecía más interesante ver las diferencias entre países cercanos. Es decir, poder realizar una visión económica con mayor perspectiva y así obtener un análisis más global.
+
+Por ello, en mi trabajo he analizado datos así como el PIB per cápita, la cantidad de población, la esperanza de vida de ésta así como la esperanza de vida escolar y la cantidad de deuda externa a la que está sometida cada país. 
+
+En cuanto al número de países he escogido España, Francia, Italia y Reino Unido principalmente, ya que eran países con los que habíamos trabajado durante todas las entregas y los que analicé también en mi trabajo grupal. 
+
+
+## **Datos**
+
+Para la extracción de datos he considerado que cuanto más tiempo pudiese ahorrar mejor ya que, para mi, ésta era la parte más complicada del trabajo y me parecía mucho más interesante mostrar las habilidades adquiridas con el programa a la hora de realizar los gráficos. 
+
+Por lo tanto, debido a que así lo hice en el trabajo grupal y que consideraba que era la forma más sencilla para una buena extracción de datos, los datos trabajados provienen principalmente del Banco Mundial, aunque también he hecho uso del paquete gapminder que contaba con una gran cantidad de estos así como con variables muy interesantes para mi estudio.
+
+<br>
+
+# 2. **PIB Y POBLACIÓN**
+
+Como hemos estudiado a lo largo de la carrera, un buen indicador económico es la cantidad de producto nacional que posee el país. 
+
+El PIB, o producto interno bruto, es una medida de la producción económica de un país. Se calcula como la suma de todos los bienes y servicios finales producidos en el país durante un período de tiempo determinado, generalmente un año. El PIB incluye la producción de bienes tangibles como automóviles y computadoras, así como la producción de servicios como la educación y la atención médica. Es una medida importante de la economía de un país y se utiliza comúnmente para comparar el tamaño de las economías de diferentes países.
+
+En cambio, el PIB per cápita es una medida del PIB de un país dividida por la población del país. Se utiliza a menudo para comparar el nivel de vida entre países, ya que proporciona una medida más precisa de la riqueza y bienestar de un país en términos per cápita.
+
+Cuando se comparan países con diferentes tamaños de población, el PIB per cápita es una medida más precisa que el PIB simple, ya que toma en cuenta el tamaño de la población y no solo la cantidad total de bienes y servicios producidos. Por ejemplo, si dos países tienen PIBs similares, pero uno tiene una población mucho mayor que el otro, es más probable que el país con la población más pequeña tenga un nivel de vida más alto, ya que la riqueza se está dividiendo entre menos personas. Por lo tanto, el PIB per cápita es a menudo utilizado como una medida más precisa de la prosperidad de un país, y por lo tanto es el que pretendo analizar. 
+
+<br>
+
+## 2.1. **POBLACIÓN**
+
+Como he comentado anteriormente, uno de los mejores indicadores es el PIB per cápita, ya que tiene en cuenta la población de la región y permite sacar conclusiones más razonables de la evolución económica de esta. 
+
+De esta forma voy a analizar, en primer lugar, la cantidad de población para hacernos así una idea del tamaño de cada país. Para empezar, el análisis será en un cómputo más global y acto seguido según rangos de edad.
+
+
+
+### **Cantidad**
+
+En primer lugar, si nos centramos en cantidades, he realizado una tabla agrupando por países, en concreto España, Francia, GB e Italia (que son los más próximos al nuestro y los estudiados en clase). 
+
+Por lo tanto, en la tabla podemos observar como, en el caso de los países que he seleccionado, predominan en cuanto a población Francia y Gran Bretaña, aunque no muy lejos se encuentra Italia. En cuanto a España la cantidad de habitantes se encuentra bastante por debajo de estos anteriores.
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+#AGRUPANDO EN UNA TABLA PARA UNA MEJOR VISIÓN DE LOS DATOS
+pop <- gapminder %>% 
+  select(year, pop, country)
+
+pop00 <- pop %>% filter(country == "Spain"|
+                        country == "France"|
+                        country == "United Kingdom"|
+                        country == "Italy") %>% 
+                      filter(year == 2007)
+
+banderas <- c("https://www.comprarbanderas.es/images/banderas/400/60-espana-sin-escudo_400px.jpg", "https://upload.wikimedia.org/wikipedia/commons/c/c3/Flag_of_France.svg", "https://www.banderas-mundo.es/data/flags/w1600/gb.png", "https://media.istockphoto.com/id/1063640060/es/vector/vector-bandera-de-italia.jpg?s=612x612&w=0&k=20&c=gZUTN3jEmTjiqIJWbW6oOZjcH55MzsjsLMBs74-R1Lo=")
+
+banderas_df <- data.frame(banderas, stringsAsFactors = FALSE)
+colnames(banderas_df) <- "_"
+
+tablapob <- cbind(pop00, banderas_df)
+
+tablapob <- tablapob %>% gt()
+
+tablapob %>% gt::text_transform(locations = cells_body(columns = "_"), fn = function(x){gt::web_image(x, height = 25)})
+```
+
+<br>
+
+### **Por rangos de edad**
+
+Para finalizar con el apartado de la población, he querido mostrar en un gráfico como se distribuye la población según rangos de edad. Para este análisis he escogido los mismos países que en la población total aunque también he añadido China ya que es uno de los países más poblados. 
+
+Para mostrar los datos de una forma clara y poder comparar entre países he realizado un "facet_wrap", el cual podéis visualizar a continuación.
+
+En este gráfico podemos observar como la mayor cantidad de población está situada entre los 15 y 64 años, también por ser el rango de edad más amplio. Por otra parte, también observamos como, para China y Gran Bretaña (en su mayoría), hay más población infantil que en estado de vejez. Ocurre lo contrario en Francia, Italia y España, donde parece que la población está bastante envejecida. 
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+#COMO ESTÁ REPARTIDA LA POBLACIÓN POR EDADES
+pob <- wbsearch(pattern = "total population", field = "indicator")
+pob0 <- wb(country = c( "ESP", "FRA", "GBR", "ITA", "CHN"), indicator = c("SP.POP.0014.TO.ZS", "SP.POP.1564.TO.ZS", "SP.POP.65UP.TO.ZS"), startdate = 2000, enddate = 2022, POSIXct = TRUE)
+
+ggpob <- ggplot(pob0, aes(x = date, y = value, color = indicatorID, group = indicatorID)) + geom_point() + geom_line() + 
+  theme(panel.background = element_rect(fill = "lightyellow", colour = "white"), plot.background = element_rect(fill = "navajowhite", colour = "bisque")) + 
+  labs(title = "% DE POBLACIÓN TOTAL", subtitle = "(según rango de edades)", x = "período", y = "% de población total", colour = "rango edades") +
+  facet_wrap(~country) + 
+  scale_color_discrete(labels = c("0-14 años", "15-64 años", ">= 65 años")) + 
+  scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020"))
+ggpob
+```
+
+
+## 2.2. **PIB PER CÁPITA** {.tabset .tabset-pills}
+
+Centrándome ya en el PIB per cápita, comentado anteriormente, he querido plasmar en un mapa como se distribuye este según distintos países. De esta forma, podemos observar como aquellos países con un color más fuerte son países con un menor PIBpc  y, por el contrario, aquellos países con un color más claro representarán cantidades elevadas de éste indicador, todo para el año 2007.
+
+Por otra parte, he querido añadir, además de otro gráfico para ver los datos de forma distinta, una tabla con datos numéricos, en concreto para los países que he seleccionado: España, Francia, GB e Italia.
+
+Como podemos observar en el mapa encontramos países con PIBs per cápita más elevados como es el caso de la mayoría de los países europeos o Australia. En cambio, hay países con niveles mucho menores como es el caso de la mayoría de países africanos. 
+
+En el caso de los países que he seleccionado, predominan en cuanto a PIB per cápita Francia y Gran Bretaña. En cuanto a España e Italia la cantidad de PIB per cápita se encuentra bastante por debajo de estos anteriores. 
+
+::: {.panel-tabset}
+### MAPA
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+#PROPORCIÓN DE PIB PER CÁPITA (2007)
+gapminder <- gapminder::gapminder  
+gdp <- gapminder %>% filter(year == 2007)
+
+gdp1 <- gdp %>% 
+  select(year, gdpPercap, country) %>% 
+  mutate(year = as.numeric(year)) %>%  
+  mutate(proporción = ntile 
+         (gdpPercap, 4))
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+world <- world %>% filter(subregion != "Antarctica") %>% filter(admin != "Greenland")
+aa <- ggplot() + geom_sf(data = world) + theme_void()
+world <- world %>% select(name, geometry)
+
+gdp2 <- left_join(gdp1, world, by = c("country" = "name"))
+
+gdp2gg <- gdp2 %>% 
+  ggplot + geom_sf (data = gdp2, aes(geometry = geometry , fill = proporción)) + 
+  scale_fill_viridis_c(option = "mako") + labs(title = "PIB PER CÁPITA POR PAÍSES", subtitle = "(más claro mayor proporción, oscuro menor)") 
+
+gdp2gg
+```
+
+
+### TABLA
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+gdptabla <- gapminder %>% 
+  select(year, gdpPercap, country)
+
+gdp00 <- gdptabla %>% filter(country == "Spain"|
+                        country == "France"|
+                        country == "United Kingdom"|
+                        country == "Italy") %>% 
+                      filter(year == 2007)
+
+banderas <- c("https://www.comprarbanderas.es/images/banderas/400/60-espana-sin-escudo_400px.jpg", "https://upload.wikimedia.org/wikipedia/commons/c/c3/Flag_of_France.svg", "https://www.banderas-mundo.es/data/flags/w1600/gb.png", "https://media.istockphoto.com/id/1063640060/es/vector/vector-bandera-de-italia.jpg?s=612x612&w=0&k=20&c=gZUTN3jEmTjiqIJWbW6oOZjcH55MzsjsLMBs74-R1Lo=")
+
+banderas_df <- data.frame(banderas, stringsAsFactors = FALSE)
+colnames(banderas_df) <- "_"
+tablagdp <- cbind(gdp00, banderas_df)
+
+tablagdp <- tablagdp %>% gt()
+
+tablagdp %>% gt::text_transform(locations = cells_body(columns = "_"), fn = function(x){gt::web_image(x, height = 25)})
+```
+:::
+
+
+###### **OTRA FORMA DE VISUALIZAR LOS DATOS**
+Por otro lado, he querido añadir un wordcloud, ya que este tipo de gráficos queda muy chulo y permite ver los datos de una forma más visual y entretenida. Si observamos el gráfico con los nombres de todos los países, aquellos con un mayor tamaño representarán también un mayor tamaño de su PIB. De esta forma podemos observar como el país con mayor PIB per cápita es Noruega.
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+nombres <- gapminder %>% 
+  select(year, gdpPercap, country)
+
+nombres0 <- nombres %>% group_by(country) %>% ungroup() %>% filter(year == 2007) %>% arrange(desc(gdpPercap))
+
+nombrespaises <- nombres0 %>% mutate(word = country, freq = gdpPercap)
+nombrespaises0 <- nombrespaises %>% select(word, freq)
+
+wordcloud2(nombrespaises0)
+
+
+```
+
+
+<br>
+
+
+
+
+# 3. **ESPERANZA DE VIDA Y ESCOLAR**
+En este apartado, voy a comentar dos nuevos indicadores que, considero que, influyen en el desarrollo económico de los países. Es el caso de la esperanza de vida y la esperanza de vida escolar.
+
+Por una parte, la esperanza de vida es una medida del tiempo promedio que se espera que vivan las personas de un país o región. Se calcula promediando la edad a la que mueren las personas en un determinado lugar durante un período de tiempo determinado. La esperanza de vida es a menudo utilizada como una medida del bienestar general de una población y puede ser influenciada por factores como la calidad de la atención médica, el nivel de vida y la presencia de enfermedades contagiosas.
+
+La esperanza de vida escolar, por otro lado, es la cantidad de años que se espera que un niño viva en la escuela. Esto se calcula tomando en cuenta la tasa de mortalidad infantil y la tasa de escolarización en un determinado lugar. La esperanza de vida escolar es a menudo utilizada como una medida de la calidad de la educación y el acceso a ella en un país o región. Se considera que el desarrollo humano es muy importante en el progreso económico de un país, por lo que he querido incluir esta en mi trabajo. 
+
+
+## 3.1. **ESPERANZA DE VIDA** {.tabset .tabset-pills}
+
+Iniciando el apartado con el análisis de la esperanza de vida, tal como podemos observar, primero encontramos un gráfico dónde se plasma la esperanza de vida de los países analizados (España, Francia, GB, Italia y, en este caso también, China). En segundo lugar, he creado otro gráfico para este indicador pero en este caso intentado plasmar la diferencia por géneros.
+
+En el primer gráfico se muestra una mayor esperanza de vida para España, Italia y Francia. En el caso de Gran Bretaña y China los valores son menores, donde destaca el país asiático cuya esperanza de vida se encuentra más de 5 años por debajo de la resta de los países (actualmente). 
+
+Si dividimos por géneros, podemos observar como en todos los países las mujeres poseen una mayor esperanza de vida para todos los períodos, lo que tal vez incremente esta en el cómputo global.
+
+::: {.panel-tabset}
+#### ESPERANZA DE VIDA
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+#ESPERANZA DE VIDA PAÍSES EUROPEOS
+lifeexp <- wbsearch(pattern = "Life expectancy", field = "indicator")
+lifeexp0 <- wb(indicator = c("SP.DYN.LE00.IN"))
+lifeexp1 <- lifeexp0 %>% filter(country == "Spain" |
+                                country == "France" |
+                                country == "Italy" |
+                                country == "United Kingdom" |
+                                country == "China") %>%
+  filter(date >= 2000)
+
+gglifeexp <- ggplot(data = lifeexp1, aes(x = date, y = value, colour = country)) + geom_point() + geom_line(aes(group = country)) + labs(title = "ESPERANZA DE VIDA", x = "período", y = "nº años", colour = "países") + scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020")) + 
+  theme(panel.background = element_rect(fill = "seashell", colour = "white"), plot.background = element_rect(fill = "mistyrose", colour = "bisque"))
+
+gglifeexp
+```
+
+
+#### POR GÉNERO
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+#SI DIVIDIMOS POR GÉNERO
+lifeexp01 <- wb(country = c( "ESP", "FRA", "GBR", "ITA", "CHN"), 
+                  indicator =c("SP.DYN.LE00.FE.IN", "SP.DYN.LE00.MA.IN"), startdate = 2000, enddate = 2022, POSIXct = TRUE)
+
+por_géneros <- ggplot(lifeexp01, aes(x = date, y = value, color = indicatorID, group = indicatorID)) + geom_point() + geom_line() + 
+  theme(panel.background = element_rect(fill = "seashell", colour = "white"), plot.background = element_rect(fill = "mistyrose", colour = "bisque")) + 
+  labs(title = "ESPERANZA DE VIDA POR GÉNEROS", x = "período", y = "nº años", colour = "género") + 
+  facet_wrap(~country) + 
+  scale_color_discrete(labels = c("mujeres", "hombres")) + 
+  scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020"))
+
+por_géneros
+```
+:::
+
+
+## 3.2. **ESPERANZA DE VIDA ESCOLAR** {.tabset .tabset-pills}
+
+Por último, y terminando así con el apartado de la esperanza de vida, he añadido un indicador que me ha parecido interesante. Es el caso de la esperanza de vida escolar. Como hemos estudiado en la carrera un factor determinante del desarrollo económico es la evolución del capital humano. Por lo tanto, es muy importante analizar cuantos años dedica el ser humano a su educación la cual contribuye a la evolución económica del país.
+
+En el gráfico se muestra como la esperanza de vida escolar tiene mayores niveles para ambos sexos en España, seguido de forma muy cercana por Gran Bretaña. Destaca, aunque no sorprende, que la menor esperanza de vida escolar sea la de China, debido ya sea por la cantidad de población que posee (cosa que puede variar su promedio) o por la poca escolarización con la que cuenta. 
+
+Por otro lado, he querido añadir un gráfico que cree junto con mis compañeras para el trabajo grupal. Se trata de otro "facet_wrap" donde se compara el IPG (índice de paridad de género) en los diferentes niveles de escolarización, así como entre los diferentes países. Me parecía interesante ver una representación que englobase el género tal como lo he hecho en la anterior esperanza de vida. 
+
+La paridad de género se refiere a la igualdad entre hombres y mujeres en términos de acceso a oportunidades, recursos y recompensas. El índice de paridad de género (IPG) es una medida utilizada para evaluar el grado en que se alcanza la igualdad de género en una sociedad en particular. En su forma más simple, es calculado como el cociente del número de mujeres por el número de varones en una etapa determinada de educación (primaria, secundaria etc.). Por lo tanto, si el resultado es mayor a 1, significa que las mujeres tienen una mayor representación en el sector estudiado.
+
+Como podemos observar en este último gráfico, solo en el caso de la escolarización primaria hay una mayor representación del sexo masculino en la mayoría de países. En cambio, en el caso de las escolarizaciones secundaria y terciaria, es la mujer la que predomina en prácticamente todos los países. 
+
+::: {.panel-tabset}
+#### ESPERANZA DE VIDA ESCOLAR 
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+
+#ESPERANZA DE VIDA ESCOLAR
+school <- wb(indicator = c("SE.SCH.LIFE", "SE.SCH.LIFE.FE", "SE.SCH.LIFE.MA"))
+school1 <- school %>% filter(country == "Spain" |
+                                  country == "France" |
+                                  country == "Italy" |
+                                  country == "United Kingdom" |
+                                  country == "China") %>%
+  filter(date >= 2000)
+
+ggschool <- 
+  ggplot() +
+  geom_col(data = school1, aes(x = indicatorID, y = value, fill = `country`), position = "dodge") +
+  scale_fill_brewer(palette = "Blues") + theme(axis.text.x = element_text(colour = "black"), panel.background = element_rect(fill = "lightyellow1", colour = "white"), plot.background = element_rect(fill = "lightyellow2", colour = "bisque")) + labs(title = "ESPERANZA DE VIDA ESCOLAR", x = "indicador", y = "nº años", colour = "países", caption = "Fuente: Elaboración propia con datos del Banco de España")+ 
+  scale_x_discrete(labels = c("ambos", "mujeres", "hombres")) + 
+  theme(legend.position = "bottom", legend.direction = "horizontal")
+
+ggschool
+```
+
+
+#### IPG 
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+escol_nivel <- wb(country = c( "ESP", "FRA", "GBR", "ITA"), 
+                  indicator =c("SE.ENR.PRIM.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS"),
+                  startdate = 2000, enddate = 2016, POSIXct = TRUE)
+
+por_paises <- ggplot(escol_nivel, aes(x = date_ct ,y = value, color = indicatorID, group = indicatorID)) + geom_point() + geom_line() + theme(panel.background = element_rect(fill = "lightyellow1", colour = "white"), plot.background = element_rect(fill = "lightyellow2", colour = "bisque")) +labs(title = "ÍNDICE DE PARIDAD DE GÉNERO SEGÚN EL NIVEL DE ESTUDIOS", x = "período", y = "valor", colour = "escolarización") +   facet_wrap(~country) +  scale_color_discrete(labels = c("primaria", "secundaria" , "terciaria"))
+
+por_paises 
+```
+:::
+
+<br>
+
+# 4. **RELACIONES CON EL EXTERIOR**
+
+Finalizando con el trabajo, he añadido varios indicadores muy importantes a la hora de evaluar el crecimiento económico. Se trata de la deuda que mantiene cada país con el exterior así como de la inversión directa extranjera. Pasamos a analizarlos.  
+
+## 4.1. **NIVEL DE ENDEUDAMIENTO**
+
+El nivel de endeudamiento externo de un país es la cantidad de deuda que ha contraído el gobierno o las empresas de ese país con acreedores extranjeros. Esto incluye la deuda contraída a través de la emisión de bonos del gobierno o de las empresas en el mercado internacional de capitales, así como la deuda contraída a través de préstamos bancarios internacionales.
+
+El nivel de endeudamiento externo de un país puede ser una medida importante de la salud financiera del país y puede afectar su capacidad para hacer frente a sus obligaciones financieras. Si el nivel de endeudamiento externo es alto en relación con el PIB del país, puede ser una señal de que el país tiene dificultades financieras y puede tener dificultades para hacer frente a sus obligaciones de deuda con acreedores extranjeros. Por otro lado, si el nivel de endeudamiento externo es bajo en relación con el PIB, puede ser una señal de que el país tiene una salud financiera sólida y es capaz de hacer frente a sus obligaciones de deuda con acreedores extranjeros.
+
+Como podemos observar en el gráfico, para todos los períodos, Reino Unido es el país, de los estudiados, que mantiene mayor porcentaje de deuda (sobre el PIB). Le sigue Francia y, aunque pueda parecer sorprendente, es España el país con menor nivel de deuda de entre los 3. Aún así, los tres países dependen en gran medida del exterior lo que nos indica que tanto Reino Unido como Francia y España tienen dificultades financieras y pueden tener dificultades para hacer frente a sus obligaciones de deuda con acreedores extranjeros.
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+
+#DEUDA
+debt0 <- wbsearch(pattern = "gdp", field = "indicator")
+
+debt <- wb(indicator = c("GC.DOD.TOTL.GD.ZS"))
+
+debt01 <- debt %>% filter(country == "Spain" |
+                               country == "France" |
+                               country == "Italy" |
+                               country == "United Kingdom" |
+                               country == "China") %>%
+  filter(date >= 2000) %>%
+  select(country, indicator, value, date)
+
+ggdebt <- ggplot(debt01, aes(x = date, y = value, color = country)) + geom_point() + geom_line(aes(group = country)) + 
+  theme(panel.background = element_rect(fill = "oldlace", colour = "white"), plot.background = element_rect(fill = "powderblue", colour = "bisque")) + 
+  labs(title = "DEUDA TOTAL, % PIB", subtitle = "(por países)", x = "período", y = "deuda", colour = "países") + scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020")) 
+  
+ggdebt
+```
+ 
+ 
+ 
+## 4.2. **INVERSIÓN DIRECTA EXTRANJERA**{.tabset .tabset-pills}
+
+La inversión directa extranjera (IDE) es el flujo de capital a través del cual una empresa o inversor de un país adquiere una participación significativa en una empresa en otro país. Esto incluye la adquisición de acciones en una empresa extranjera, la creación de una empresa en el extranjero o la expansión de una empresa existente en el extranjero.
+
+Las salidas de inversión directa extranjera son las operaciones en las que una empresa o inversor de un país vende su participación en una empresa en otro país. Por otro lado, las entradas de inversión directa extranjera son las operaciones en las que una empresa o inversor de un país adquiere una participación en una empresa en otro país.
+
+Como podemos observar en el gráfico, las entradas (INFLOWS) no destacan en su mayoría, solo Reino Unido posee cifras más elevadas. En cambio, si centramos nuestra atención en las salidas (OUTFLOWS), vemos como las cifras varían bastante. En este caso ya hay otros países que tienen valores más elevados que en el caso del anterior gráfico, lo que nos indica que mayoritariamente hay más ventas que compras al extranjero. 
+
+::: {.panel-tabset}
+### ENTRADAS
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+#inflows
+otros <- wbsearch(pattern = "investment", field = "indicator")
+IDE0 <- wb(indicator = c("BX.KLT.DINV.WD.GD.ZS"))
+IDEinflows <- IDE0 %>% filter(country == "Spain" |
+                            country == "France" |
+                            country == "Italy" |
+                            country == "United Kingdom" |
+                            country == "China") %>%
+  filter(date >= 2000) %>%
+  select(country, indicator, value, date)
+
+ggIDEin <- ggplot(IDEinflows, aes(x = date, y = value, color = country)) + geom_point() + geom_line(aes(group = country)) + 
+  theme(panel.background = element_rect(fill = "oldlace", colour = "white"), plot.background = element_rect(fill = "powderblue", colour = "bisque")) + 
+  labs(title = "IDE, entradas netas, % PIB", subtitle = "(por países)", x = "período", y = "Inv. Directa Extr.", colour = "países") + scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020")) 
+
+ggIDEin
+````
+
+### SALIDAS
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+
+#outflows
+otros <- wbsearch(pattern = "investment", field = "indicator")
+IDE1 <- wb(indicator = c("BM.KLT.DINV.WD.GD.ZS"))
+IDEoutflows <- IDE1 %>% filter(country == "Spain" |
+                               country == "France" |
+                               country == "Italy" |
+                               country == "United Kingdom" |
+                               country == "China") %>%
+  filter(date >= 2000) %>%
+  select(country, indicator, value, date)
+
+ggIDEout <- ggplot(IDEoutflows, aes(x = date, y = value, color = country)) + geom_point() + geom_line(aes(group = country)) + 
+  theme(panel.background = element_rect(fill = "oldlace", colour = "white"), plot.background = element_rect(fill = "powderblue", colour = "bisque")) + 
+  labs(title = "IDE, salidas netas, % PIB", subtitle = "(por países)", x = "período", y = "Inv. Directa Extr.", colour = "países") + scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020")) 
+
+ggIDEout
+````
+:::
+
+<br>
+
+# 5. **TASA DE DESEMPLEO Y OCUPACIÓN** {.tabset .tabset-pills}
+
+Por último, un indicador que influye también en el desarrollo económico, es el porcentaje de paro que hay en el país (negativamente, claro).
+
+Por lo tanto, y de forma breve, he querido representar en dos gráficos la tasa de paro y de ocupación que poseen los países analizados. 
+
+La tasa de paro es el porcentaje de la población activa que se encuentra sin trabajo pero que está dispuesta a trabajar y está buscando activamente empleo. Se calcula dividiendo el número de personas desempleadas por el número de personas en la población activa y multiplicando el resultado por 100.
+
+La tasa de ocupación, por otro lado, es el porcentaje de la población activa que tiene empleo. Se calcula dividiendo el número de personas ocupadas por el número de personas en la población activa y multiplicando el resultado por 100.
+
+Es importante tener en cuenta que la tasa de paro y la tasa de ocupación son dos indicadores complementarios y que juntos proporcionan una visión más completa de la situación del mercado laboral de un país. 
+
+Como podemos observar, destaca la tasa de paro de España entre el 2013-2014, que llega a doblar la tasa de paro de los otros países. De esta forma podemos comprobar que no es mito que España tenga una de las mayores tasas de desempleo, cosa que no favorece para nada el desarrollo económico. 
+
+::: {.panel-tabset}
+## DESEMPLEO
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+#PARO
+otros1 <- wbsearch(pattern = "unemployment", field = "indicator")
+paro <- wb(indicator = c("SL.UEM.TOTL.NE.ZS"))
+paro0 <- paro %>% filter(country == "Spain" |
+                                 country == "France" |
+                                 country == "Italy" |
+                                 country == "United Kingdom" |
+                                 country == "China") %>%
+  filter(date >= 2000) %>%
+  select(country, indicator, value, date)
+
+ggparo <- ggplot(paro0, aes(x = date, y = value, color = country)) + geom_point() + geom_line(aes(group = country)) + 
+  theme(panel.background = element_rect(fill = "ivory", colour = "white"), plot.background = element_rect(fill = "lightcyan1", colour = "bisque")) + 
+  labs(title = "% DESEMPLEADOS", subtitle = "(del total de mano de obra)", x = "período", y = "% parados", colour = "países") + scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020")) 
+
+ggparo
+````
+
+
+## OCUPACIÓN
+```{r, echo = TRUE, message = FALSE, warning = FALSE, results = TRUE}
+#ocupados
+otros2 <- wbsearch(pattern = "employment", field = "indicator")
+ocupados <- wb(indicator = c("SL.UEM.TOTL.NE.ZS"))
+ocupados0 <- ocupados %>% filter(country == "Spain" |
+                           country == "France" |
+                           country == "Italy" |
+                           country == "United Kingdom" |
+                           country == "China") %>%
+  filter(date >= 2000) %>%
+  select(country, indicator, value, date) 
+ocupados1 <- ocupados0 %>% mutate(ocup = 100 - value) %>% select(country, indicator, ocup, date)
+
+ggocup <- ggplot(ocupados1, aes(x = date, y = ocup, color = country)) + geom_point() + geom_line(aes(group = country)) + 
+  theme(panel.background = element_rect(fill = "ivory", colour = "white"), plot.background = element_rect(fill = "lightcyan1", colour = "bisque")) + 
+  labs(title = "% OCUPADOS", subtitle = "(del total de mano de obra)", x = "período", y = "% ocupados", colour = "países") + scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020")) + ylim(ymin = 70, ymax = 100)
+
+ggocup
+````
+:::
+
+<br>
+
+# 6. **CONCLUSIÓN**
+
+Como conclusión al anáisis realizado añadiría que el PIB per cápita, la población, la esperanza de vida así como el endeudamiento y la inversión con el exterior son todos factores que pueden influir en el crecimiento económico de un país.
+
+El PIB per cápita es una medida de la producción económica de un país por persona y puede ser una buena medida del nivel de vida de la población. Si el PIB per cápita aumenta, es probable que el nivel de vida de la población también aumente y esto puede contribuir al crecimiento económico del país.
+
+La población puede influir en el crecimiento económico de un país. Una población creciente puede proporcionar una fuerza laboral más grande y puede contribuir al crecimiento económico del país a través de la producción de bienes y servicios. Sin embargo, una población muy grande también puede poner una presión sobre los recursos y puede dificultar el crecimiento económico.
+
+Por otra parte, el endeudamiento externo podría también conllevar cambios en el crecimiento económico de un país. Si un país tiene un nivel alto de endeudamiento externo, puede tener dificultades para hacer frente a sus obligaciones financieras y esto puede dificultar el crecimiento económico. Por otro lado, un nivel bajo de endeudamiento externo puede indicar una salud financiera sólida y puede facilitar el crecimiento económico.
+
+Por último, la inversión extranjera directa (IED) puede ser beneficiosa para el crecimiento económico de un país de diversas maneras y en cambio una alta tasa de paro entorpecer este crecimiento. 
+
+Añadir que, aunque no lo haya hecho en este anterior análisis, se debe tener en cuenta también el vital papel de las instituciones, sin el cual ninguna de estas evoluciones hubiesen tenido sentido.
+
+Desde mi punto de vista, la conclusión que he podido sacar es que el país cuyo desarrollo parece más prometedor es aquel que apuesta por la educación así como la cualificación de la mano de obra, ya que de nada sirve augmentar en cantidad la población de la región si estos habitantes no son nada productivos. También tiene un papel muy importante la dependencia con el exterior, ya que el país no debería ser muy dependiente de inversiones externas y así tener mayor capacidad de maniobra.
+
+Por lo tanto, como comentan la mayoría de los analistas, un buen nivel de PIBpc, esperanza de vida, así como una baja dependencia del exterior, junto con una decreciente tasa de desempleo, favorecen una próspera evolución del crecimiento y desarrollo de la economía. 
+
+<br>
+
+# 7. **BIBLIOGRAFIA**
+
+Principalmente he usado datos de la página web del banco mundial [aquí](https://datos.bancomundial.org).
+
+Por otra parte, ha sido muy útil la descarga de datos del paquete gapminder, así como la página web de la asginatura [aquí](https://perezp44.github.io/intro-ds-22-23-web/index.html).
+
+Por último, destacar como también he consultado trabajos realizados por nuestros compañeros el año anterior. Estos últimos los podemos encontrar [aquí](https://perezp44.github.io/intro-ds-21-22-web/07-trabajos.html).

@@ -1,0 +1,217 @@
+---
+title: "Analizando el nivel de desarrollo de distintos países"
+author: "Helena Albors Marqués"
+date: "Diciembre de 2022 (actualizado el `r format(Sys.time(), '%d-%m-%Y')`)"
+output:
+   html_document: 
+    css: "styles.css"
+    self_contained: true
+    code_download: true
+    code_folding: "hide"
+    theme: cerulean
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+    df_print: kable
+editor_options: 
+  chunk_output_type: console
+---
+
+body {
+    background-color:red;
+    }
+
+```{r chunk-setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE, warning = FALSE, 
+                      #results = "hold",
+                      cache = FALSE, cache.path = "/caches/", comment = "#>",
+                      #fig.width = 7, #fig.height= 7,   
+                      #out.width = 7, out.height = 7,
+                      collapse = TRUE,  fig.show = "hold",
+                      fig.asp = 0.628, out.width = "75%", fig.align = "center")
+knitr::opts_chunk$set(dev = "png", dev.args = list(type = "cairo-png"))
+
+```
+
+
+```{r options-setup, include = FALSE}
+options(scipen = 999) #- para quitar la notación científica
+options("yaml.eval.expr" = TRUE) 
+
+```
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(wbstats)
+library(ggplot2)
+library(gganimate)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(wordcloud2)
+library(gt)
+library(gapminder)
+```
+
+<br>
+
+# 1. **INTRODUCCIÓN**
+
+## **Motivación**
+Para la asignatura de "Programación y manejo de datos en la era del Big Data" debíamos realizar un trabajo individual mostrando nuestras habilidades adquiridas con RStudio a lo largo del curso. 
+
+Igual que en el caso del trabajo grupal, la elección del tema era libre. En mi caso, he escogido un análisis breve y global sobre el nivel de desarrollo de distintos países. La elección se debe a que en otra asignatura del curso, "Crecimiento y desarrollo económico en la historia", se nos exigió un ensayo sobre el desarrollo económico de un país en concreto. En mi caso tuve que hacerlo de Botsuana, pero me parecía más interesante ver las diferencias entre países, es decir, poder realizar una visión económica con mayor perspectiva y así obtener un análisis más global.
+
+Por ello, en mi trabajo he analizado datos así como el PIB per cápita, la cantidad de población, la espranza de vida de ésta así como la esperanza de vida escolar. 
+
+
+## **Datos**
+
+Para la extracción de datos yo no quería dedicar mucho tiempo, ya que me parecía más interesante mostrar las habilidades adquiridas con el programa a la hora de realizar los gráficos. Por lo tanto, la mayoría de mis datos extraídos son del Banco Mundial, aunque también he cogido alguna información del paquete gapminder. 
+
+<br>
+
+# 2. **PIB Y POBLACIÓN**
+
+Como hemos estudiado a lo largo de la carrera, un buen indicador económico es la cantidad de producto nacional que posee el país. En este caso, analizaremos el PIB per cápita, ya que nos facilitará la comparación entre distintos países así como un análisis más detallado de su evolución económica. 
+
+
+## 2.1. **PIB PER CÁPITA**{.tabset .tabset-pills}
+
+En este caso he querido plasmar en un mapa como se distribuye el PIB per cápita por países. De esta forma, podemos observar como aquellos países con un color más fuerte son países con un menor PIB y, por el contrario, aquellos países con un color más claro representarán cantidades elevadas de éste indicador, todo para el año 2007.
+
+Por otra parte, he querido añadir, además de otro gráfico para ver los datos de forma distinta, una tabla con datos numéricos, adjutando así todos los períodos que tenia disponibles para poder ver su evolución a lo largo de los años. 
+
+<div id="Mapa">
+#### Mapa
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+#PROPORCIÓN DE PIB PER CÁPITA (2007)
+gapminder <- gapminder::gapminder  
+gdp <- gapminder %>% filter(year == 2007)
+
+gdp1 <- gdp %>% 
+  select(year, gdpPercap, country) %>% 
+  mutate(year = as.numeric(year)) %>%  
+  mutate(proporción = ntile 
+         (gdpPercap, 4))
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+world <- world %>% filter(subregion != "Antarctica") %>% filter(admin != "Greenland")
+aa <- ggplot() + geom_sf(data = world) + theme_void()
+world <- world %>% select(name, geometry)
+
+gdp2 <- left_join(gdp1, world, by = c("country" = "name"))
+
+gdp2gg <- gdp2 %>% 
+  ggplot + geom_sf (data = gdp2, aes(geometry = geometry , fill = proporción)) + 
+  scale_fill_viridis_c(option = "mako") + labs(title = "PIB PER CÁPITA POR PAÍSES", subtitle = "(más claro mayor proporción, oscuro menor)") 
+
+gdp2gg
+```
+</div>
+
+
+
+<div id="Otra forma de visualizar los datos">
+#### Otra forma de visualizar los datos
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+nombres <- gapminder %>% 
+  select(year, gdpPercap, country)
+
+nombres0 <- nombres %>% group_by(country) %>% ungroup() %>% filter(year == 2007) %>% arrange(desc(gdpPercap))
+
+nombrespaises <- nombres0 %>% mutate(word = country, freq = gdpPercap)
+nombrespaises0 <- nombrespaises %>% select(word, freq)
+
+
+wordcloud2(data = nombrespaises0, size = 0.1)
+
+```
+</div>
+
+
+
+<div id="Tabla">
+#### Tabla
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+#tabla
+gdptabla <- gapminder %>% 
+  select(year, pop, country)
+
+gdptabla1 <- gdptabla %>%
+  tibble::as_tibble() %>%
+  DT::datatable(filter = 'top', options = list(pageLength = 7, autoWidth = TRUE))
+
+gdptabla1
+```
+</div>
+
+
+
+## 2.2. **POBLACIÓN**
+
+Como he comentado anteriormente, uno de los mejores indicadores es el PIB per cápita, ya que tiene en cuenta la población de la región y permite sacar conclusiones más razonables de la evolución económica de esta. 
+
+De esta forma, voy a analizar la cantidad de población, primero en un cómputo global y acto seguido según rangos de edades. 
+
+### 2.2.1. **CANTIDAD**{.tabset .tabset-pills}
+
+En primer lugar, si nos centramos en cantidades, he realizado una tabla, con todos los períodos que me ofrecía el paquete gapminder y, por otra parte, he añadido un gráfico más bonito que nos muestra, para el año 2007, que países destacan más en cantidad de población. El gráfico nos mostrará los nombres de los países más numerosos (en habitantes) con un tamaño mayor y los que cuenten con menos tendrán un tamaño más reducido. 
+
+<div id="Tabla">
+#### Tabla
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+#AGRUPANDO EN UNA TABLA PARA UNA MEJOR VISIÓN DE LOS DATOS
+pop <- gapminder %>% 
+  select(year, pop, country)
+
+pop0 <- pop %>%
+  tibble::as_tibble() %>%
+  DT::datatable(filter = 'top', options = list(pageLength = 7, autoWidth = TRUE))
+
+pop0
+```
+</div>
+
+
+<div id="Otra forma de visualizar los datos">
+#### Otra forma de visualizar los datos
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+#otra forma de visualizar los datos (solo para el último año, 2007)
+paises <- pop %>% group_by(country) %>% ungroup() %>% filter(year == 2007) %>% arrange(desc(pop))
+
+nombrespaises <- paises %>% mutate(word = country, freq = pop)
+nombrespaises0 <- nombrespaises %>% select(word, freq)
+
+
+wordcloud2(data = nombrespaises0, size = 0.5)
+```
+</div>
+
+<br>
+
+### 2.2.1. **POR RANGOS DE EDAD**{.tabset .tabset-pills}
+
+En último lugar, para finalizar así con el apartado de la población, he querido mostrar en un gráfico como se distribuye la población según rangos de edad. Para este análisis he escogido algunos países en concreto, así como España, Francia, Gran Bretaña, Italia y China. 
+
+Para mostrar los datos de una forma clara y poder comparar entre países he realizado un "facet_wrap", el cual podeis visualizar a continuación:
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+#COMO ESTÁ REPARTIDA LA POBLACIÓN POR EDADES
+pob <- wbsearch(pattern = "total population", field = "indicator")
+pob0 <- wb(country = c( "ESP", "FRA", "GBR", "ITA", "CHN"), indicator = c("SP.POP.0014.TO.ZS", "SP.POP.1564.TO.ZS", "SP.POP.65UP.TO.ZS"), startdate = 2000, enddate = 2022, POSIXct = TRUE)
+
+ggpob <- ggplot(pob0, aes(x = date, y = value, color = indicatorID, group = indicatorID)) + geom_point() + geom_line() + 
+  theme(panel.background = element_rect(fill = "lightyellow", colour = "white"), plot.background = element_rect(fill = "navajowhite", colour = "bisque")) + 
+  labs(title = "% DE POBLACIÓN TOTAL", subtitle = "(según rango de edades)", x = "período", y = "% de población total", colour = "rango edades") +
+  facet_wrap(~country) + 
+  scale_color_discrete(labels = c("0-14 años", "15-64 años", ">= 65 años")) + 
+  scale_x_discrete(breaks = c("2000", "2005", "2010", "2015", "2020"))
+ggpob
+```
+
+
+
+
+
