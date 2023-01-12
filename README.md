@@ -15,6 +15,6 @@ La versión final del trabajo puede visualizarse en: <https://helenaalbors.githu
 
 El autor del trabajo soy yo, Helena Albors Marqués (healmar@alumni.uv.es)
 
-El título del trabajo es "Analizando los indicadores que influyen en el nivel de desarrollo de los países". El objetivo es realizar un análisis de los indicadores que influyen en el crecimiento y desarrollo económico en la historia por países, tal como lo he hecho en otra asignatura del curso, pero en este caso en vez de descargarme los gráficos procedo a crearlos. 
+El título del trabajo es "Analizando los indicadores que afectan al nivel de desarrollo de los países". El objetivo es realizar un análisis de los indicadores que influyen en el crecimiento y desarrollo económico en la historia por países, tal como lo he hecho en otra asignatura del curso, pero en este caso en vez de descargarme los gráficos procedo a crearlos. 
 
 
