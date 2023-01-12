@@ -8,13 +8,13 @@ Repo utilizado para elaborar el trabajo individual para la asignatura "Programac
 
 
 <!-- En la linea de abajo HAS de SUSTITUIR "perezp44" por tu usuario de Github-->
-La versión final del trabajo puede visualizarse en: <https://perezp44.github.io/trabajo_BigData/>. 
+La versión final del trabajo puede visualizarse en: <https://helenaalbors.github.io/trabajo_BigData/>. 
 
 
 <!-- Abajo podéis escribir lo que queráis, igual un resumen del trabajo, o ..., o ... pero al menos, tenéis que poner el título del trabajo y el nombre de los componentes del equipo-->
 
 El autor del trabajo soy yo, Helena Albors Marqués (healmar@alumni.uv.es)
 
-El título del trabajo es "Analizando el nivel de desarrollo de distintos países". El objetivo es realizar un análisis del crecimiento y desarrollo económico en la historia por países, tal como lo he hecho en otra asignatura del curso, pero en este caso en vez de descargarme los gráficos procedo a crearlos. 
+El título del trabajo es "Analizando los indicadores que influyen en el nivel de desarrollo de los países". El objetivo es realizar un análisis de los indicadores que influyen en el crecimiento y desarrollo económico en la historia por países, tal como lo he hecho en otra asignatura del curso, pero en este caso en vez de descargarme los gráficos procedo a crearlos. 
 
 
